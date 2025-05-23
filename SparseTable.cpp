@@ -19,7 +19,7 @@ void buildSparseTable(int n) {
     for (int i = 0; i < n; ++i)
         sm[i][0] = a[i];
 
-    for (int j = 0; j < 20; ++j) {
+    for (int j = 1; j < 20; ++j) {
         for (int i = 0; i + (i << j) <= n; ++i) {
             sm[i][j] = sm[i][j - 1] + sm[1 + (1 << (j - 1))][j - 1];
         }

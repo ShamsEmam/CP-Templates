@@ -3,8 +3,8 @@
 using namespace std;
 
 #define int long long
-const int N = 2e5 + 10;
-int tree[N*4], arr[N];
+const int N = 1e5 + 10;
+int tree[N * 4], arr[N];
 
 //build Segment tree
 void buildSegment(int node, int l, int r) {
@@ -17,13 +17,13 @@ void buildSegment(int node, int l, int r) {
     int mid = (r + l) / 2;
 
     //left node
-    buildSegment(node * 1, l, mid);
+    buildSegment(node * 2, l, mid);             // left child
 
     //Right node
-    buildSegment(node * 2 + 1, mid + 1, r);
+    buildSegment(node * 2 + 1, mid + 1, r);     // right child
 
     // node ->marge (left child,right child)
-    tree[node] = max(tree[node * 2 + 1], tree[node * 2]);
+    tree[node] = tree[node * 2] + tree[node * 2 + 1];
 }
 
 //update
@@ -37,16 +37,17 @@ void update(int node, int l, int r, int idx, int NewVal) {
     }
 
     int mid = (l + r) / 2;
-    //go right
-    if (idx > mid)
-        update(node * 2 + 1, mid + 1, r, idx, NewVal);
 
-        //go left[l,mid]
-    else
+    //go left[l,mid]
+    if (idx <= mid)
         update(node * 2, l, mid, idx, NewVal);
 
+    //go right
+    else
+        update(node * 2 + 1, mid + 1, r, idx, NewVal);
+
     // node ->marge (left child,right child)
-    tree[node] = max(tree[node * 2 + 1], tree[node * 2]);
+    tree[node] = tree[node * 2] + tree[node * 2 + 1];
 }
 
 
@@ -70,7 +71,7 @@ int query(int node, int l, int r, int start, int end) {
 }
 
 void solve() {
-
+  
 }
 
 
@@ -90,7 +91,7 @@ signed main() {
     setupIO();
     speed();
     int t = 1;
-    cin >> t;
+//    cin >> t;
     while (t--) solve();
     return 0;
 }

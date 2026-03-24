@@ -284,3 +284,46 @@ double maximum_dist_from_polygon_to_polygon(vector<pt> &u, vector<pt> &v){
     while(step--){ if(cross(u[(i+1)%n]-u[i],v[(j+1)%m]-v[j])>=0) j=(j+1)%m; else i=(i+1)%n; ans=max(ans,sq(u[i]-v[j])); }
     return sqrt(ans);
 }
+// ==================== CIRCLES ====================
+struct circle {
+    pt p; T r;
+    circle() {}
+    circle(pt p, T r) : p(p), r(r) {}
+};
+
+bool interCC(circle C1, circle C2, pt &p1, pt &p2) {
+    T d = abs(C1.p - C2.p);
+    if (d > C1.r + C2.r + EPS || d + min(C1.r, C2.r) + EPS < max(C1.r, C2.r)) return false;
+    T a = (sq(C1.r) - sq(C2.r) + sq(d)) / (2*d);
+    T h = sqrt(max((T)0, sq(C1.r) - sq(a)));
+    pt P0 = C1.p + (C2.p - C1.p) * (a/d);
+    pt offset = perp(C2.p - C1.p) * (h/d);
+    p1 = P0 + offset;
+    p2 = P0 - offset;
+    return true;
+}
+
+bool interCL(circle C, line L, pt &p1, pt &p2) {
+    pt P = L.proj(C.p);
+    T h2 = sq(C.r) - sq(P - C.p);
+    if(h2 < -EPS) return false;
+    T h = sqrt(max((T)0, h2));
+    pt dir = L.v / abs(L.v) * h;
+    p1 = P + dir; 
+    p2 = P - dir;
+    return true;
+}
+
+vector<pt> tangents(circle C1, circle C2) {
+    vector<pt> res;
+    for(int sign1 = +1; sign1 >= -1; sign1 -= 2) {
+        T r = C2.r * sign1 - C1.r;
+        pt c2c1 = C2.p - C1.p;
+        T z = sq(c2c1) - r*r;
+        if(z < -EPS) continue;
+        z = sqrt(max((T)0, z));
+        pt v = (c2c1*r + pt{-c2c1.y, c2c1.x}*z)/sq(c2c1);
+        res.push_back(C1.p + C1.r*v);
+    }
+    return res;
+}

@@ -11,53 +11,73 @@ T const EPS = 1e-12;
 
 
 //////////////////////////////////////////  CIRCLES   //////////////////////////////////////////
-pair<double, point> findCircle(point a, point b, point c) {
-	//create median, vector, its prependicular
-	point m1 = (b+a)*0.5, v1 = b-a, pv1 = point(v1.Y, -v1.X);
-	point m2 = (b+c)*0.5, v2 = b-c, pv2 = point(v2.Y, -v2.X);
-	point end1 = m1+pv1, end2 = m2+pv2, center;
-	intersectSegments(m1, end1, m2, end2, center);
-	return make_pair( length(a-center), center );  
+struct Circle {
+    pt center;
+    ld radius;
+};
+
+// Circumcircle of 3 points
+Circle findCircle(pt a, pt b, pt c) {
+    pt mid1 = (a + b) / (T)2;
+    pt mid2 = (b + c) / (T)2;
+    pt d1 = pt(-(b - a).y, (b - a).x); // perpendicular to (b-a)
+    pt d2 = pt(-(c - b).y, (c - b).x); // perpendicular to (c-b)
+
+    // mid1 + t*d1 = mid2 + s*d2  => solve for t
+    // cross both sides with d2
+    T denom = cross(d1, d2);
+    if (fabs(denom) < EPS) {
+        // collinear: return circle around the two farthest points
+        ld d1_ = len(a - b), d2_ = len(b - c), d3_ = len(a - c);
+        if (d1_ >= d2_ && d1_ >= d3_) return { (a+b)/(T)2, d1_/(T)2 };
+        if (d2_ >= d1_ && d2_ >= d3_) return { (b+c)/(T)2, d2_/(T)2 };
+        return { (a+c)/(T)2, d3_/(T)2 };
+    }
+
+    T t = cross(mid2 - mid1, d2) / denom;
+    pt center = mid1 + d1 * t;
+    return { center, len(a - center) };
 }
 
+// ==================== WELZL ====================
+const int MAX = 305;
+pt pnts[MAX], r[3], cen;
+ld rad;
+int ps, rs;
 
-
-
-const int MAX = 100000+9;
-point pnts[MAX], r[3], cen;
-double rad;
-int ps, rs;	// ps = n, rs = 0, initially
-
-// Pre condition
-// random_shuffle(pnts, pnts+ps);		rs = 0;
 void MEC() {
-	if(ps == 0 && rs == 2) {
-		cen = (r[0]+r[1])/2.0;
-		rad = length(r[0]-cen);
-	}
-	else if(rs == 3) {
-		pair<double, point> p = findCircle(r[0], r[1], r[2]);
-		cen = p.second;
-		rad = p.first;
-	}
-	else if(ps == 0) {
-		cen = r[0];	// sometime be garbage, but will not affect
-		rad = 0;
-	}
-	else {
-		ps--;
-		MEC();
+    if (ps == 0 && rs == 0) { rad = 0; return; }
+    if (ps == 0 && rs == 1) { cen = r[0]; rad = 0; return; }
+    if (ps == 0 && rs == 2) {
+        cen = (r[0] + r[1]) / (T)2;
+        rad = len(r[0] - cen);
+        return;
+    }
+    if (rs == 3) {
+        Circle c = findCircle(r[0], r[1], r[2]);
+        cen = c.center;
+        rad = c.radius;
+        return;
+    }
 
-		if(length(pnts[ps]-cen) > rad) {
-			r[rs++] = pnts[ps];
-			MEC();
-			rs--;
-		}
-
-		ps++;
-	}
+    ps--;
+    MEC();
+    if (len(pnts[ps] - cen) > rad + EPS) {
+        r[rs++] = pnts[ps];
+        MEC();
+        rs--;
+    }
+    ps++;
 }
 
+Circle minCircle(vector<pt>& pts) {
+    if (pts.empty()) return { {0,0}, 0 };
+    ps = sz(pts); rs = 0;
+    for (int i = 0; i < ps; i++) pnts[i] = pts[i];
+    shuffle(pnts, pnts + ps, mt19937{random_device{}()});
+    MEC();
+    return { cen, rad };
+}
 pair<pt, T> circumCircle(pt a, pt b, pt c) {
     b = b - a, c = c - a; // consider coordinates relative to A
     assert(cross(b,c) != 0); // no circumcircle if A,B,C aligned
